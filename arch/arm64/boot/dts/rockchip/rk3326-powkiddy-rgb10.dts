@@ -9,30 +9,11 @@
 #include "rk3326-odroid-go.dtsi"
 
 / {
-	model = "ODROID-GO Advance Black Edition";
-	compatible = "hardkernel,rk3326-odroid-go2-v11", "rockchip,rk3326";
+	model = "Powkiddy RGB10";
+	compatible = "powkiddy,rk3326-rgb10", "rockchip,rk3326";
 
 	aliases {
 		mmc1 = &sdio;
-	};
-
-	gpio_keys: volume-keys {
-		compatible = "gpio-keys-polled";
-		poll-interval = <5>;
-		autorepeat;
-
-		volume-up-button {
-			label = "VOLUMEUP";
-			linux,code = <KEY_VOLUMEUP>;
-			gpios = <&gpio2 RK_PA3 GPIO_ACTIVE_LOW>;
-
-		};
-		volume-down-button {
-			label = "VOLUMEDOWN";
-			linux,code = <KEY_VOLUMEDOWN>;
-			gpios = <&gpio2 RK_PA2 GPIO_ACTIVE_LOW>;
-
-		};
 	};
 
 	joypad: odroidgo2-joypad {
@@ -98,17 +79,16 @@
 		*/
 
 		/*
-		      *** ODROIDGO2-Advance Switch layoout ***
+		      *** RGB10 Switch layoout ***
 		|------------------------------------------------|
 		| sw15                                      sw16 |
 		|        sw20                         sw21       |
 		|------------------------------------------------|
-		|     sw1      |-------------------|      sw8    |
+		|    sw1  sw10 |-------------------| sw13 sw8    |
 		|  sw3   sw4   |                   |   sw7   sw5 |
 		|     sw2      |    LCD Display    |      sw6    |
 		|              |                   |             |
 		|              |-------------------|             |
-		|         sw9 sw10   vol- vol+   sw13 sw14       |
 		|------------------------------------------------|
 		*/
                 /*
@@ -186,12 +166,12 @@
                         linux,code = <BTN_TR>; // 0x05
                 };
                 sw20 {
-                        gpios = <&gpio3 RK_PB7 GPIO_ACTIVE_LOW>;
+                        gpios = <&gpio2 RK_PA2 GPIO_ACTIVE_LOW>;
                         label = "GPIO TOP-LEFT2";
                         linux,code = <BTN_TL2>;
                 };
                 sw21 {
-                        gpios = <&gpio3 RK_PB2 GPIO_ACTIVE_LOW>;
+                        gpios = <&gpio2 RK_PA3 GPIO_ACTIVE_LOW>;
                         label = "GPIO TOP-RIGHT2";
                         linux,code = <BTN_TR2>;
                 };
@@ -199,8 +179,8 @@
 
 	battery: battery {
 		compatible = "simple-battery";
-		charge-full-design-microamp-hours = <3000000>;
-		charge-term-current-microamp = <300000>;
+		charge-full-design-microamp-hours = <2800000>;
+		charge-term-current-microamp = <280000>;
 		constant-charge-current-max-microamp = <2000000>;
 		constant-charge-voltage-max-microvolt = <4200000>;
 		factory-internal-resistance-micro-ohms = <180000>;
@@ -220,9 +200,7 @@
 		compatible = "mmc-pwrseq-simple";
 		pinctrl-names = "default";
 		pinctrl-0 = <&wifi_pwrseq_pins>;
-		reset-gpios = <&gpio3 RK_PB1 GPIO_ACTIVE_LOW>;
-		post-power-on-delay-ms = <300>;
-		power-off-delay-us = <200000>;
+		/*reset-gpios = <&gpio3 RK_PB1 GPIO_ACTIVE_LOW>;*/
 	};
 };
 
@@ -262,13 +240,12 @@
 	keep-power-in-suspend;
 	non-removable;
 	vmmc-supply = <&vcc_wifi>;
-	mmc-pwrseq = <&wifi_pwrseq>;
 	status = "okay";
 
 	esp8089: wifi@1 {
 		compatible = "esp,esp8089";
 		reg = <1>;
-		esp,crystal-26M-en = <1>;
+		esp,crystal-26M-en = <2>;
 	};
 };
 
@@ -296,7 +273,7 @@
 
 	wifi {
 		wifi_pwrseq_pins: wifi-pwrseq-pins {
-			rockchip,pins = <3 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>,
+			rockchip,pins = /*<3 RK_PB1 RK_FUNC_GPIO &pcfg_pull_up>,*/
 					<3 RK_PB6 RK_FUNC_GPIO &pcfg_output_high>;
 		};
 	};

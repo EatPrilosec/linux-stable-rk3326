@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 /*
- * Copyright (c) 2019 Hardkernel Co., Ltd
- * Copyright (c) 2020 Theobroma Systems Design und Consulting GmbH
- * Copyright (c) 2022 Maya Matuszczyk <maccraft123mc@gmail.com>
+ * # Copyright (C) 2022-24 JELOS (https://github.com/JustEnoughLinuxOS)
  */
 
 /dts-v1/;
@@ -13,9 +11,13 @@
 #include "rk3326.dtsi"
 
 / {
-	aliases {
-		mmc0 = &sdmmc;
-	};
+	model = "Game Console R33S";
+	compatible = "gameconsolec,r33s", "rockchip,rk3326";
+
+       aliases {
+               mmc0 = &sdio;
+               mmc1 = &sdmmc;
+       };
 
 	chosen {
 		stdout-path = "serial2:115200n8";
@@ -61,30 +63,43 @@
 		default-brightness-level = <128>;
 	};
 
-	/* led-1 is wired directly to output of always-on regulator */
-
-	gpio_led: gpio-leds {
-		compatible = "gpio-leds";
+	gpio-keys-vol {
+		compatible = "gpio-keys";
+		autorepeat;
+		pinctrl-0 = <&btn_pins_vol>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&red_led_pin>;
 
-		red_led: led-3 {
-			color = <LED_COLOR_ID_RED>;
-			gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;
-			function = LED_FUNCTION_CHARGING;
+		button-vol-down {
+			gpios = <&gpio2 RK_PA1 GPIO_ACTIVE_LOW>;
+			label = "VOLUMEDOWN";
+			linux,code = <KEY_VOLUMEDOWN>;
+		};
+
+		button-volume-up {
+			gpios = <&gpio2 RK_PA0 GPIO_ACTIVE_LOW>;
+			label = "VOLUMEUP";
+			linux,code = <KEY_VOLUMEUP>;
 		};
 	};
 
-	pwm_led: led-controller {
-		compatible = "pwm-leds";
+	battery: battery {
+		compatible = "simple-battery";
+		charge-full-design-microamp-hours = <3200000>;
+		charge-term-current-microamp = <320000>;
+		constant-charge-current-max-microamp = <2000000>;
+		constant-charge-voltage-max-microvolt = <4200000>;
+		factory-internal-resistance-micro-ohms = <180000>;
+		voltage-max-design-microvolt = <4100000>;
+		voltage-min-design-microvolt = <3500000>;
 
-		blue_led: led-2 {
-			color = <LED_COLOR_ID_BLUE>;
-			function = LED_FUNCTION_STATUS;
-			linux,default-trigger = "heartbeat";
-			max-brightness = <255>;
-			pwms = <&pwm3 0 25000 0>;
-		};
+		ocv-capacity-celsius = <20>;
+		ocv-capacity-table-0 =  <4046950 100>, <4001920 95>, <3967900 90>, <3919950 85>,
+					<3888450 80>, <3861850 75>, <3831540 70>, <3799130 65>,
+					<3768190 60>, <3745650 55>, <3726610 50>, <3711630 45>,
+					<3696720 40>, <3685660 35>, <3674950 30>, <3663050 25>,
+					<3649470 20>, <3635260 15>, <3616920 10>, <3592440 5>,
+					<3574170 0>;
+       
 	};
 
 	rk817-sound {
@@ -118,19 +133,6 @@
 		regulator-always-on;
 		regulator-min-microvolt = <3800000>;
 		regulator-max-microvolt = <3800000>;
-	};
-
-	vcc_host: vcc_host {
-		compatible = "regulator-fixed";
-		regulator-name = "vcc_host";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
-
-		gpio = <&gpio0 RK_PB7 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		regulator-always-on;
-		regulator-boot-on;
-		vin-supply = <&usb_midu>;
 	};
 };
 
@@ -203,6 +205,12 @@
 &gpu {
 	mali-supply = <&vdd_logic>;
 	status = "okay";
+};
+
+&internal_display {
+	compatible = "gameconsole,r36s-panel", "sitronix,st7703";
+	iovcc-supply = <&vcc_lcd>;
+	vdd-supply = <&vcc_lcd>;
 };
 
 &i2c0 {
@@ -329,25 +337,25 @@
 			vccio_sd: LDO_REG5 {
 				regulator-name = "vccio_sd";
 				regulator-min-microvolt = <1800000>;
-				regulator-max-microvolt = <3300000>;
+				regulator-max-microvolt = <1800000>;
 				regulator-always-on;
 				regulator-boot-on;
 
 				regulator-state-mem {
 					regulator-on-in-suspend;
-					regulator-suspend-microvolt = <3300000>;
+					regulator-suspend-microvolt = <1800000>;
 				};
 			};
 
 			vcc_sd: LDO_REG6 {
 				regulator-name = "vcc_sd";
-				regulator-min-microvolt = <3300000>;
-				regulator-max-microvolt = <3300000>;
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <3000000>;
 				regulator-boot-on;
 
 				regulator-state-mem {
 					regulator-on-in-suspend;
-					regulator-suspend-microvolt = <3300000>;
+					regulator-suspend-microvolt = <3000000>;
 				};
 			};
 
@@ -398,19 +406,12 @@
 	};
 };
 
-/* EXT Header(P2): 7(SCL:GPIO0.C2), 8(SDA:GPIO0.C3) */
-&i2c1 {
-	clock-frequency = <400000>;
-	status = "okay";
-};
-
-/* I2S 1 Channel Used */
 &i2s1_2ch {
 	status = "okay";
 };
 
 &io_domains {
-	vccio1-supply = <&vcc_3v3>;
+	vccio1-supply = <&vccio_sd>;
 	vccio2-supply = <&vccio_sd>;
 	vccio3-supply = <&vcc_3v3>;
 	vccio4-supply = <&vcc_3v3>;
@@ -425,11 +426,11 @@
 	status = "okay";
 };
 
-&pwm1 {
+&pwm0 {
 	status = "okay";
 };
 
-&pwm3 {
+&pwm1 {
 	status = "okay";
 };
 
@@ -439,9 +440,11 @@
 };
 
 &sdmmc {
+        bus-width = <4>;
 	cap-sd-highspeed;
-	card-detect-delay = <200>;
+	card-detect-delay = <800>;
 	cd-gpios = <&gpio0 RK_PA3 GPIO_ACTIVE_LOW>; /*[> CD GPIO <]*/
+        disable-wp;
 	sd-uhs-sdr12;
 	sd-uhs-sdr25;
 	sd-uhs-sdr50;
@@ -451,20 +454,19 @@
 	status = "okay";
 };
 
-&sfc {
-	pinctrl-0 = <&sfc_clk &sfc_cs0 &sfc_bus2>;
-	pinctrl-names = "default";
-	#address-cells = <1>;
-	#size-cells = <0>;
+&sdio {
+        bus-width = <4>;
+	cap-sd-highspeed;
+	card-detect-delay = <800>;
+	cd-gpios = <&gpio3 RK_PB6 GPIO_ACTIVE_LOW>; /*[> CD GPIO <]*/
+        disable-wp;
+	sd-uhs-sdr12;
+	sd-uhs-sdr25;
+	sd-uhs-sdr50;
+	sd-uhs-sdr104;
+	vmmc-supply = <&vcc_sd>;
+	vqmmc-supply = <&vccio_sd>;
 	status = "okay";
-
-	flash@0 {
-		compatible = "jedec,spi-nor";
-		reg = <0>;
-		spi-max-frequency = <108000000>;
-		spi-rx-bus-width = <2>;
-		spi-tx-bus-width = <1>;
-	};
 };
 
 &tsadc {
@@ -487,13 +489,6 @@
 	status = "okay";
 };
 
-/* EXT Header(P2): 2(RXD:GPIO1.C0),3(TXD:.C1),4(CTS:.C2),5(RTS:.C3) */
-&uart1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&uart1_xfer &uart1_cts>;
-	status = "okay";
-};
-
 &uart2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart2m1_xfer>;
@@ -508,40 +503,24 @@
 	status = "okay";
 };
 
+&rk817_charger {
+	monitored-battery = <&battery>;
+};
+
 &pinctrl {
-	btns {
-		btn_pins: btn-pins {
-			rockchip,pins = <1 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PB4 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PB5 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PB6 RK_FUNC_GPIO &pcfg_pull_up>,
-					<1 RK_PB7 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA0 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA1 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA2 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA4 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA5 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA6 RK_FUNC_GPIO &pcfg_pull_up>,
-					<2 RK_PA7 RK_FUNC_GPIO &pcfg_pull_up>;
-		};
-	};
+        btns {
+                btn_pins_vol: btn-pins-vol {
+                                rockchip,pins = <2 RK_PA0 RK_FUNC_GPIO &pcfg_pull_up>,
+                                                <2 RK_PA1 RK_FUNC_GPIO &pcfg_pull_up>;
+                                };
+                };
 
 	headphone {
 		hp_det: hp-det {
 			rockchip,pins = <2 RK_PC6 RK_FUNC_GPIO &pcfg_pull_down>;
 		};
 	};
-
-	leds {
-		red_led_pin: red-led-pin {
-			rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-	};
-
+		
 	pmic {
 		dc_det: dc-det {
 			rockchip,pins = <0 RK_PB3 RK_FUNC_GPIO &pcfg_pull_none>;
