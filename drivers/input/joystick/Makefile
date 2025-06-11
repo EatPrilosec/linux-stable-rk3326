@@ -47,5 +47,3 @@ obj-$(CONFIG_JOYSTICK_WALKERA0701)	+= walkera0701.o
 obj-$(CONFIG_JOYSTICK_XPAD)		+= xpad.o
 obj-$(CONFIG_JOYSTICK_XU10)		+= xu10-joypad.o
 obj-$(CONFIG_JOYSTICK_ZHENHUA)		+= zhenhua.o
-obj-y += rocknix-joypad.o
-obj-y += rocknix-singleadc-joypad.o
